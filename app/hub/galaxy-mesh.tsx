@@ -15,7 +15,7 @@ export const galaxies=[
 export default function GalaxyMesh({paused,reduced,selected,onSelect}:{paused:boolean;reduced:boolean;selected:number;onSelect:(n:number)=>void}){
  const ref=useRef<HTMLCanvasElement>(null),clock=useRef(0),labels=useRef<HTMLDivElement>(null);
  useEffect(()=>{
-  const canvas=ref.current!,ctx=canvas.getContext("2d");if(!ctx)return;
+  const canvas=ref.current!;const maybeCtx=canvas.getContext("2d");if(!maybeCtx)return;const ctx:CanvasRenderingContext2D=maybeCtx;
   let frame=0,last=0,w=1,h=1,visible=!document.hidden;
   const seed=(n:number)=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v)};
   const resize=()=>{const r=canvas.getBoundingClientRect();w=r.width;h=r.height;const d=Math.min(devicePixelRatio||1,2);canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0);draw(clock.current)};
