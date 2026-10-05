@@ -1,0 +1,80 @@
+name: Publish Loki66 to Global A2A Registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/global-a2a-index.yml"
+  schedule:
+    - cron: "11 5 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate Loki66 Agent Card
+        shell: bash
+        run: |
+          set -euo pipefail
+          CARD="https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"
+          curl --fail --silent --show-error --max-time 30 "$CARD" -o agent-card.json
+          python - <<'PY'
+          import json
+          card=json.load(open("agent-card.json"))
+          assert card.get("name") == "Loki66 Rendezvous", card
+          assert card.get("version") == "1.5.0", card
+          assert len(card.get("skills", [])) >= 5, card
+          assert any(
+            x.get("protocolBinding") == "JSONRPC"
+            and x.get("url") == "https://loki66-agent-beacon.onrender.com/a2a"
+            for x in card.get("supportedInterfaces", [])
+          ), card
+          print("Validated", card["name"], card["version"], "skills=", len(card["skills"]))
+          PY
+
+      - name: Search Global A2A Registry
+        id: search
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://api.a2a-registry.org/public/agents?q=Loki66"
+          if curl --fail --silent --show-error --max-time 30 "$URL" -o global-a2a-search.json; then
+            cat global-a2a-search.json
+            echo
+            if grep -qi "loki66-agent-beacon.onrender.com" global-a2a-search.json; then
+              echo "present=true" >> "$GITHUB_OUTPUT"
+              echo "Loki66 is already indexed."
+            else
+              echo "present=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Submit manifest to Global A2A Registry
+        if: steps.search.outputs.present != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY='{"manifestUrl":"https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"}'
+          code=$(curl --silent --show-error --max-time 60             -o ingest.json             -w "%{http_code}"             -X POST "https://api.a2a-registry.org/public/ingest"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.5"             -d "$BODY")
+
+          cat ingest.json || true
+          echo
+          echo "Global A2A Registry HTTP status: $code"
+          case "$code" in
+            200|201|202|204|409|422|429) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+      - name: Verify discovery
+        continue-on-error: true
+        shell: bash
+        run: |
+          sleep 2
+          curl --fail --silent --show-error --max-time 30             "https://api.a2a-registry.org/public/agents?q=Loki66"             | tee global-a2a-after.json
