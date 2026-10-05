@@ -1,0 +1,67 @@
+name: Verify Loki66 A2A v1.5.1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/a2a-v151-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait for v1.5.1 deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://loki66-agent-beacon.onrender.com"
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 20 "$BASE/.well-known/agent-card.json" -o card.json; then
+              V=$(python -c 'import json; print(json.load(open("card.json")).get("version",""))')
+              if [ "$V" = "1.5.1" ]; then break; fi
+            fi
+            sleep 10
+          done
+          test "$(python -c 'import json; print(json.load(open("card.json")).get("version",""))')" = "1.5.1"
+
+      - name: Test canonical HTTP+JSON message send
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY='{"message":{"messageId":"registry-smoke-v151","role":"ROLE_USER","parts":[{"text":"Beacon status"}]}}'
+          for PATH in "/message:send" "/message/send" "/a2a/v1/message:send"; do
+            echo "Testing $PATH"
+            curl --fail --silent --show-error --max-time 30               -X POST "https://loki66-agent-beacon.onrender.com$PATH"               -H "Content-Type: application/json"               -H "A2A-Version: 1.0"               -d "$BODY" | tee response.json
+            python - <<'PY'
+          import json
+          d=json.load(open("response.json"))
+          assert "task" in d, d
+          assert d["task"]["status"]["state"] == "TASK_STATE_COMPLETED", d
+          PY
+          done
+
+      - name: Test JSON-RPC SendMessage
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30             -X POST "https://loki66-agent-beacon.onrender.com/a2a"             -H "Content-Type: application/json"             -H "A2A-Version: 1.0"             -d '{"jsonrpc":"2.0","id":"smoke-v151","method":"SendMessage","params":{"message":{"messageId":"smoke-v151","role":"ROLE_USER","parts":[{"text":"Beacon status"}]}}}'             | tee rpc.json
+          python - <<'PY'
+          import json
+          d=json.load(open("rpc.json"))
+          assert d.get("result",{}).get("task",{}).get("status",{}).get("state") == "TASK_STATE_COMPLETED", d
+          PY
+
+      - name: Test health endpoint
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --max-time 30             "https://loki66-agent-beacon.onrender.com/health"
+
+      - name: Ask A2A Registry to see current record
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --max-time 30             "https://a2aregistry.org/api/agents?search=Loki66&limit=100"
