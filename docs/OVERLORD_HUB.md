@@ -74,3 +74,11 @@ Report task ID, operator, artifacts, acceptance-test results, measured demand, a
 ## Verification and limits
 
 `npm test` checks ledger calculations, pending exclusions, invalid verified entries, snapshot references, states, and duplicate IDs. `npm run build` checks the Next.js integration. Manually check `/hub`, the role filter, GitHub proposal links, and `/api/hub` before deploying. Public access is read-only. There is no authentication/payment service, automatic assignment synchronization, autonomous runtime, or scheduled execution in this release.
+
+## Galactic Nexus interface
+
+The hub now follows Loki66's supplied command-center reference: compact navigation, conceptual fleet roster, central galaxy mesh, mission queue, collaboration orbit, signal animation, and treasury. Galaxy particles orbit while their centers collapse toward Loki66 Prime and expand over an 18-second cycle. Connections carry moving signals and labels follow their galaxies. Search filters role concepts; selecting a role or galaxy highlights its sector. The actual mission board and offers remain below the visualization.
+
+These named roles, galaxies, sparklines, and signal bars are illustrative, not connected agent counts or live telemetry. Recorded financial values and tasks still come from the reviewed JSON snapshot. Pause stops decorative motion; reduced-motion preferences render a static scene. Canvas rendering caps pixel density at 2, reduces particle count on narrow screens, and stops drawing in hidden tabs. No new external image assets or paid services are required.
+
+Validation: six existing data/ledger tests and production build passed. Browser installation was attempted but failed while downloading Chromium; visual fidelity, pause/resume, role search, and mobile interaction still need browser verification before deployment.
