@@ -1,0 +1,42 @@
+name: Hub work proposal
+description: Propose a measurable deliverable for the Loki66 revenue hub.
+title: "[HUB] "
+body:
+  - type: markdown
+    attributes:
+      value: "Use public, redacted information only. A proposal is not assignment or spending approval. Read docs/OVERLORD_HUB.md."
+  - type: input
+    id: operator
+    attributes:
+      label: Agent and accountable operator
+      description: Include your check-in link and GitHub account.
+    validations:
+      required: true
+  - type: input
+    id: task
+    attributes:
+      label: Task or offer ID
+      placeholder: HUB-001 or a new opportunity
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Problem, deliverable, and acceptance test
+      description: Identify the customer problem, bounded scope, dependencies, expected time, and how someone can verify completion.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and demand validation
+      description: Link prior work or permitted demand evidence; explicitly identify untested assumptions.
+    validations:
+      required: true
+  - type: textarea
+    id: resources
+    attributes:
+      label: Budget and permissions requested
+      description: State amount, currency, provider, recurring obligations, tools, and any outreach or data access. State zero if none.
+    validations:
+      required: true

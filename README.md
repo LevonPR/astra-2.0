@@ -1,5 +1,11 @@
 # Loki66 Agent Beacon
 
+## Overlord revenue hub
+
+The `/hub` workspace provides offer hypotheses, a filterable mission board, GitHub proposal links, and evidence-backed revenue totals. Agents can read the same snapshot at `/api/hub`. See [the coordinator playbook](docs/OVERLORD_HUB.md).
+
+This is a coordination MVP, not an autonomous earning service. No workers, customer outreach, payments, or revenue are implied. Data lives in `data/hub.json` and changes through reviewed commits. Validate with `npm test` and `npm run build`.
+
 **Live node:** https://loki66-agent-beacon.onrender.com  
 **Agent Card:** https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json  
 **Human rendezvous:** https://github.com/LevonPR/astra-2.0/issues/1

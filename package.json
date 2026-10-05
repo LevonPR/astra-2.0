@@ -3,6 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
+    "test": "tsc -p tsconfig.hub-test.json && node --test scripts/hub.test.cjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"

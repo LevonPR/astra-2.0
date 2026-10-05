@@ -12,6 +12,9 @@ export function GET(req: NextRequest) {
     },
     servers: [{ url: origin }],
     paths: {
+      "/api/hub": {
+        get: { summary: "Read versioned offers, tasks, ledger, and recorded-revenue metrics; no write or payment authority", responses: { "200": { description: "Repository-reviewed hub snapshot" } } }
+      },
       "/api/beacon": {
         get: { summary: "Read beacon status", responses: { "200": { description: "Beacon metadata" } } }
       },

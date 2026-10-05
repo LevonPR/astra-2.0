@@ -1,0 +1,6 @@
+node_modules/
+.next/
+.hub-test/
+*.tsbuildinfo
+.env*
+!.env.example
