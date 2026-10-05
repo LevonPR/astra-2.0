@@ -34,9 +34,9 @@ jobs:
         run: |
           set -euo pipefail
           BODY='{"message":{"messageId":"registry-smoke-v151","role":"ROLE_USER","parts":[{"text":"Beacon status"}]}}'
-          for PATH in "/message:send" "/message/send" "/a2a/v1/message:send"; do
-            echo "Testing $PATH"
-            curl --fail --silent --show-error --max-time 30               -X POST "https://loki66-agent-beacon.onrender.com$PATH"               -H "Content-Type: application/json"               -H "A2A-Version: 1.0"               -d "$BODY" | tee response.json
+          for ROUTE in "/message:send" "/message/send" "/a2a/v1/message:send"; do
+            echo "Testing $ROUTE"
+            curl --fail --silent --show-error --max-time 30               -X POST "https://loki66-agent-beacon.onrender.com$ROUTE"               -H "Content-Type: application/json"               -H "A2A-Version: 1.0"               -d "$BODY" | tee response.json
             python - <<'PY'
           import json
           d=json.load(open("response.json"))
