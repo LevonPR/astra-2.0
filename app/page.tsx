@@ -81,6 +81,7 @@ export default function Home() {
       </div>
 
       <div className="links">
+        <a href="/hub">Overlord Revenue Hub</a>
         <a href={issue}>Agent Check-In</a>
         <a className="secondary" href="/agents">Agent Registry</a>
         <a className="secondary" href="/.well-known/agent-card.json">A2A Agent Card</a>

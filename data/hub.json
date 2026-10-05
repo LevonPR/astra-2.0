@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "updated": "2026-10-05",
+  "coordinator": "Overlord",
+  "coordinatorStatus": "Role available; no connected runtime verified",
+  "currency": "USD",
+  "firstRevenueGoalCents": 100000,
+  "monthlyRevenueGoalCents": 1000000,
+  "offers": [
+    {
+      "id": "automation-pilot",
+      "title": "Small-business automation pilot",
+      "customer": "Owner-operated service businesses",
+      "problem": "Repeated spreadsheet entry and weekly reporting",
+      "deliverable": "One workflow using synthetic data, setup guide, and recorded demo",
+      "priceHypothesisCents": 30000,
+      "validation": "Obtain permission for customer discovery, then document three conversations and one willingness-to-pay signal.",
+      "status": "unvalidated"
+    },
+    {
+      "id": "product-visuals",
+      "title": "Product visual starter pack",
+      "customer": "Small online sellers with rights to their product assets",
+      "problem": "Insufficient product images for listings and promotion",
+      "deliverable": "Three approved product visuals, source files, and usage notes",
+      "priceHypothesisCents": 15000,
+      "validation": "Build one rights-cleared sample and measure buyer interest before purchasing generation credits.",
+      "status": "unvalidated"
+    },
+    {
+      "id": "carrier-toolkit",
+      "title": "Carrier operations toolkit",
+      "customer": "Small trucking fleets",
+      "problem": "Fragmented load, expense, and document tracking",
+      "deliverable": "Load-profit worksheet and document checklist with synthetic examples and instructions",
+      "priceHypothesisCents": 10000,
+      "validation": "Test usability on synthetic loads; ask three authorized fleet contacts which task they would pay to simplify.",
+      "status": "unvalidated"
+    }
+  ],
+  "tasks": [
+    {"id":"HUB-001","offerId":"automation-pilot","title":"Build a synthetic-data automation demo","role":"builder","status":"ready","assignee":null,"acceptance":"CSV input produces a repeatable weekly summary; include sample data, tests, and a two-minute walkthrough.","budgetCents":0,"evidence":[]},
+    {"id":"HUB-002","offerId":"product-visuals","title":"Prepare a rights-cleared visual sample brief","role":"product","status":"ready","assignee":null,"acceptance":"Specify three shots, source-asset rights, revision limits, and estimated unit cost. Paid generation awaits approval.","budgetCents":0,"evidence":[]},
+    {"id":"HUB-003","offerId":"carrier-toolkit","title":"Prototype a load-profit worksheet","role":"builder","status":"ready","assignee":null,"acceptance":"Use synthetic loads; test revenue minus fuel, driver pay, tolls, and other costs; distinguish profit from cash received.","budgetCents":0,"evidence":[]},
+    {"id":"HUB-004","offerId":"automation-pilot","title":"Draft a customer-discovery interview","role":"scout","status":"ready","assignee":null,"acceptance":"Five problem-focused questions, qualification criteria, and a proposed contact list for private review. Do not contact anyone without authorization.","budgetCents":0,"evidence":[]},
+    {"id":"HUB-005","offerId":"carrier-toolkit","title":"Review prototype quality and economics","role":"auditor","status":"blocked","assignee":null,"acceptance":"After HUB-003: reproduce calculations, document defects, and estimate delivery effort without claiming sales.","budgetCents":0,"evidence":[]}
+  ],
+  "ledger": []
+}

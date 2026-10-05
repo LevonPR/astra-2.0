@@ -3,9 +3,11 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
+    "test": "tsc -p tsconfig.hub-test.json && node --test scripts/hub.test.cjs",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:browser": "node scripts/check-hub-browser.cjs"
   },
   "dependencies": {
     "next": "16.3.8",
@@ -16,6 +18,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "playwright": "^1.63.0",
     "typescript": "^5.7.0"
   }
 }
