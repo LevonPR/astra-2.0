@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Wait for public Agent Card
+      - name: Validate public Agent Card
         shell: bash
         run: |
           set -euo pipefail
@@ -27,28 +27,42 @@ jobs:
           import json
           card=json.load(open("card.json"))
           assert card.get("name") == "Loki66 Rendezvous", card
-          print("Agent Card reachable:", card.get("name"), card.get("version"))
+          interfaces=card.get("supportedInterfaces") or []
+          assert any(
+              i.get("protocolBinding") == "JSONRPC"
+              and i.get("url") == "https://loki66-agent-beacon.onrender.com/a2a"
+              for i in interfaces
+          ), interfaces
+          assert "localhost" not in json.dumps(card).lower(), card
+          print("Agent Card healthy:", card.get("name"), card.get("version"))
           PY
 
-      - name: Check A2A Registry
-        id: existing
+      - name: Inspect A2A Registry
+        id: registry
         shell: bash
         run: |
           set -euo pipefail
           URL="https://a2aregistry.org/api/agents?search=Loki66&limit=100"
-          if curl --fail --silent --show-error --max-time 30 "$URL" -o registry.json; then
-            if grep -qi "loki66-agent-beacon.onrender.com" registry.json; then
-              echo "registered=true" >> "$GITHUB_OUTPUT"
-              echo "Loki66 already appears in A2A Registry."
-            else
-              echo "registered=false" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "registered=false" >> "$GITHUB_OUTPUT"
+          if ! curl --fail --silent --show-error --max-time 30 "$URL" -o registry.json; then
+            echo "needs_refresh=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      - name: Register with A2A Registry
-        if: steps.existing.outputs.registered != 'true'
+          python - <<'PY'
+          import json, os
+          data=json.load(open("registry.json"))
+          raw=json.dumps(data)
+          present="loki66-agent-beacon.onrender.com" in raw.lower()
+          stale="localhost:10000" in raw.lower()
+          unhealthy='"is_healthy": false' in raw.lower() or '"passed": false' in raw.lower()
+          needs=(not present) or stale or unhealthy
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("needs_refresh=" + ("true" if needs else "false") + "\n")
+          print("present=",present,"stale=",stale,"unhealthy=",unhealthy,"needs_refresh=",needs)
+          PY
+
+      - name: Register or refresh with A2A Registry
+        if: steps.registry.outputs.needs_refresh == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -58,7 +72,7 @@ jobs:
             -w "%{http_code}" \
             -X POST "https://a2aregistry.org/api/agents/register" \
             -H "Content-Type: application/json" \
-            -H "User-Agent: Loki66-Agent-Beacon/1.2" \
+            -H "User-Agent: Loki66-Agent-Beacon/1.3" \
             -d "$BODY")
 
           cat register-response.json || true
