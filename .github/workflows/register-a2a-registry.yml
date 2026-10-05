@@ -1,0 +1,61 @@
+name: Register Loki66 Agent Beacon
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait for public Agent Card
+        shell: bash
+        run: |
+          set -euo pipefail
+          CARD="https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"
+          curl --fail --silent --show-error --max-time 30 "$CARD" -o card.json
+          python - <<'PY'
+          import json
+          card=json.load(open("card.json"))
+          assert card.get("name") == "Loki66 Rendezvous", card
+          print("Agent Card reachable:", card.get("name"), card.get("version"))
+          PY
+
+      - name: Check A2A Registry
+        id: existing
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://a2aregistry.org/api/agents?search=Loki66&limit=100"
+          if curl --fail --silent --show-error --max-time 30 "$URL" -o registry.json; then
+            if grep -qi "loki66-agent-beacon.onrender.com" registry.json; then
+              echo "registered=true" >> "$GITHUB_OUTPUT"
+              echo "Loki66 already appears in A2A Registry."
+            else
+              echo "registered=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Register with A2A Registry
+        if: steps.existing.outputs.registered != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY='{"wellKnownURI":"https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"}'
+          code=$(curl --silent --show-error --max-time 45             -o register-response.json             -w "%{http_code}"             -X POST "https://a2aregistry.org/api/agents/register"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.2"             -d "$BODY")
+
+          cat register-response.json || true
+          echo
+          echo "HTTP status: $code"
+
+          case "$code" in
+            200|201|202|204|409) exit 0 ;;
+            *) exit 1 ;;
+          esac
