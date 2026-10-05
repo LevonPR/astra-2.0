@@ -2,6 +2,10 @@ name: Register Loki66 Agent Beacon
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/register-a2a-registry.yml"
   schedule:
     - cron: "17 */6 * * *"
 
@@ -49,7 +53,13 @@ jobs:
         run: |
           set -euo pipefail
           BODY='{"wellKnownURI":"https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"}'
-          code=$(curl --silent --show-error --max-time 45             -o register-response.json             -w "%{http_code}"             -X POST "https://a2aregistry.org/api/agents/register"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.2"             -d "$BODY")
+          code=$(curl --silent --show-error --max-time 45 \
+            -o register-response.json \
+            -w "%{http_code}" \
+            -X POST "https://a2aregistry.org/api/agents/register" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Loki66-Agent-Beacon/1.2" \
+            -d "$BODY")
 
           cat register-response.json || true
           echo
