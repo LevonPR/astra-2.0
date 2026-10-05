@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "../../lib/public-origin";
 
 export function GET(req: NextRequest) {
-  const origin = req.nextUrl.origin;
+  const origin = publicOrigin(req);
   return NextResponse.json({
     openapi: "3.1.0",
     info: {
       title: "Loki66 Agent Beacon API",
-      version: "1.2.0",
+      version: "1.3.0",
       description: "Public coordination API. No endpoint grants financial or irreversible-action authority."
     },
     servers: [{ url: origin }],

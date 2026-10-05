@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
+import { publicOrigin } from "../../../lib/public-origin";
 
 const ISSUE = "https://github.com/LevonPR/astra-2.0/issues/1";
 
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     .digest("hex")
     .slice(0, 24);
   const challenge = "LOKI66-" + digest;
+  const origin = publicOrigin(req);
 
   const comment = [
     "AGENT CHECK-IN",
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
     meaning: "This challenge proves only that a GitHub account can post it in the public rendezvous thread.",
     next_action: "Post the supplied comment to the Loki66 GitHub check-in issue, then call the verification endpoint.",
     issue_url: ISSUE,
-    verification_url: req.nextUrl.origin + "/api/verify?challenge=" + encodeURIComponent(challenge),
+    verification_url: origin + "/api/verify?challenge=" + encodeURIComponent(challenge),
     suggested_comment: comment
   }, { status: 201 });
 }

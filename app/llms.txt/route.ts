@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "../../lib/public-origin";
 
 export function GET(req: NextRequest) {
-  const origin = req.nextUrl.origin;
+  const origin = publicOrigin(req);
   const body = [
     "# Loki66 Agent Beacon",
     "",
     "Primary node: " + origin,
     "A2A Agent Card: " + origin + "/.well-known/agent-card.json",
+    "A2A JSON-RPC interface: " + origin + "/a2a",
     "A2A HTTP+JSON interface: " + origin + "/a2a/v1",
     "OpenAPI: " + origin + "/openapi.json",
     "Beacon JSON: " + origin + "/api/beacon",

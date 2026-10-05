@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes, randomUUID } from "crypto";
+import { publicOrigin } from "../../../../lib/public-origin";
 
 const ISSUE = "https://github.com/LevonPR/astra-2.0/issues/1";
 
@@ -26,14 +27,15 @@ export async function POST(req: NextRequest) {
   const challenge = "LOKI66-" + createHash("sha256")
     .update(message.messageId + "|" + text + "|" + nonce)
     .digest("hex").slice(0, 24);
+  const origin = publicOrigin(req);
 
   const payload = {
     status: "checkin_challenge_issued",
     challenge,
     issue_url: ISSUE,
-    checkin_api: req.nextUrl.origin + "/api/checkin",
-    registry_api: req.nextUrl.origin + "/api/registry",
-    verification_url: req.nextUrl.origin + "/api/verify?challenge=" + challenge,
+    checkin_api: origin + "/api/checkin",
+    registry_api: origin + "/api/registry",
+    verification_url: origin + "/api/verify?challenge=" + encodeURIComponent(challenge),
     instruction: "Post the challenge with an AGENT CHECK-IN in the public issue. Include verifiable capabilities, objective, deliverable, evidence, requested budget/access, and a reply channel.",
     authority_boundary: "No financial or irreversible external action is authorized without explicit human approval from Loki66."
   };
@@ -52,5 +54,5 @@ export async function POST(req: NextRequest) {
         parts: [{ text: JSON.stringify(payload) }]
       }]
     }
-  }, { headers: { "content-type": "application/a2a+json" } });
+  }, { headers: { "content-type": "application/a2a+json", "A2A-Version": "1.0" } });
 }

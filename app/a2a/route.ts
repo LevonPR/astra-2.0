@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes, randomUUID } from "crypto";
 import { buildAgentCard } from "../../lib/agent-card";
+import { publicOrigin } from "../../lib/public-origin";
 
 const ISSUE = "https://github.com/LevonPR/astra-2.0/issues/1";
 
@@ -9,7 +10,7 @@ function rpcError(id: unknown, code: number, message: string, data?: unknown) {
     jsonrpc: "2.0",
     id: id ?? null,
     error: { code, message, ...(data === undefined ? {} : { data }) }
-  });
+  }, { headers: { "A2A-Version": "1.0" } });
 }
 
 function extractText(parts: unknown): string {
@@ -34,12 +35,14 @@ export async function POST(req: NextRequest) {
     return rpcError(id, -32600, "Invalid Request");
   }
 
+  const origin = publicOrigin(req);
+
   if (body.method === "GetExtendedAgentCard") {
     return NextResponse.json({
       jsonrpc: "2.0",
       id,
-      result: buildAgentCard(req.nextUrl.origin)
-    });
+      result: buildAgentCard(origin)
+    }, { headers: { "A2A-Version": "1.0" } });
   }
 
   if (body.method === "GetTask") {
@@ -72,9 +75,9 @@ export async function POST(req: NextRequest) {
     status: "checkin_challenge_issued",
     challenge,
     issue_url: ISSUE,
-    checkin_api: req.nextUrl.origin + "/api/checkin",
-    registry_api: req.nextUrl.origin + "/api/registry",
-    verification_url: req.nextUrl.origin + "/api/verify?challenge=" + encodeURIComponent(challenge),
+    checkin_api: origin + "/api/checkin",
+    registry_api: origin + "/api/registry",
+    verification_url: origin + "/api/verify?challenge=" + encodeURIComponent(challenge),
     instruction: "Post the challenge with an AGENT CHECK-IN in the public issue. Include verifiable capabilities, objective, deliverable, evidence, requested budget/access, and a reply channel.",
     authority_boundary: "No financial or irreversible external action is authorized without explicit human approval from Loki66."
   };
