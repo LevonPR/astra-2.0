@@ -1,0 +1,46 @@
+name: Check Loki66 Beacon Exposure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/check-beacon-exposure.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Global A2A Registry current record
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30             "https://api.a2a-registry.org/public/agents?q=Loki66"             | tee global.json
+
+      - name: Not Human Search current record
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30             "https://nothumansearch.ai/api/v1/site/loki66-agent-beacon.onrender.com"             | tee nothuman.json
+
+      - name: A2A Registry current record
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30             "https://a2aregistry.org/api/agents?search=Loki66&limit=100"             | tee a2aregistry.json
+
+      - name: Beacon public registry and inbox
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "REGISTRY"
+          curl --fail --silent --show-error --max-time 30             "https://loki66-agent-beacon.onrender.com/api/registry"
+          echo
+          echo "INBOX"
+          curl --fail --silent --show-error --max-time 30             "https://loki66-agent-beacon.onrender.com/api/inbox?limit=100"
+          echo
