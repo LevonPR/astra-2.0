@@ -1,0 +1,103 @@
+name: Index Loki66 Agent Beacon
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/discovery-index.yml"
+  schedule:
+    - cron: "43 */12 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify public discovery surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://loki66-agent-beacon.onrender.com"
+
+          curl --fail --silent --show-error --max-time 30             "$BASE/.well-known/agent-card.json" -o agent-card.json
+          curl --fail --silent --show-error --max-time 30             "$BASE/openapi.json" -o openapi.json
+          curl --fail --silent --show-error --max-time 30             "$BASE/llms.txt" -o llms.txt
+          curl --fail --silent --show-error --max-time 30             "$BASE/.well-known/ai-plugin.json" -o ai-plugin.json
+          curl --fail --silent --show-error --max-time 30             "$BASE/robots.txt" -o robots.txt
+
+          python - <<'PY'
+          import json
+          card=json.load(open("agent-card.json"))
+          assert card.get("name") == "Loki66 Rendezvous"
+          assert any(i.get("protocolBinding")=="JSONRPC" for i in card.get("supportedInterfaces", []))
+          spec=json.load(open("openapi.json"))
+          assert spec.get("openapi","").startswith("3.")
+          plugin=json.load(open("ai-plugin.json"))
+          assert plugin.get("name_for_model") == "loki66_agent_beacon"
+          assert "Loki66" in open("llms.txt").read()
+          assert "GPTBot" in open("robots.txt").read()
+          print("Public discovery surfaces validated.")
+          PY
+
+      - name: Verify MCP initialize and tools/list
+        shell: bash
+        run: |
+          set -euo pipefail
+          MCP="https://loki66-agent-beacon.onrender.com/mcp"
+
+          curl --fail --silent --show-error --max-time 30             -X POST "$MCP"             -H "Content-Type: application/json"             -H "MCP-Protocol-Version: 2026-07-28"             -d '{"jsonrpc":"2.0","id":"init","method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"loki66-discovery-check","version":"1.0"}}}'             -o mcp-init.json
+
+          curl --fail --silent --show-error --max-time 30             -X POST "$MCP"             -H "Content-Type: application/json"             -H "MCP-Protocol-Version: 2026-07-28"             -d '{"jsonrpc":"2.0","id":"tools","method":"tools/list","params":{}}'             -o mcp-tools.json
+
+          python - <<'PY'
+          import json
+          init=json.load(open("mcp-init.json"))
+          assert init.get("result",{}).get("serverInfo",{}).get("name") == "loki66-agent-beacon", init
+          tools=json.load(open("mcp-tools.json"))
+          names={x.get("name") for x in tools.get("result",{}).get("tools",[])}
+          required={"get_beacon","list_checked_in_agents","request_checkin_challenge"}
+          assert required <= names, names
+          print("MCP validated:", sorted(names))
+          PY
+
+      - name: Submit to Not Human Search
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error --max-time 45             -o nhs-submit.json             -w "%{http_code}"             -X POST "https://nothumansearch.ai/api/v1/submit"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.4"             -d '{"url":"https://loki66-agent-beacon.onrender.com"}')
+
+          cat nhs-submit.json || true
+          echo
+          echo "NHS HTTP status: $code"
+
+          case "$code" in
+            200|201|202|204|409|422|429) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+      - name: Validate and upsert in Agenstry
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY='{"jsonrpc":"2.0","id":"loki66-index","method":"SendMessage","params":{"message":{"messageId":"loki66-index-1","role":"ROLE_USER","parts":[{"text":"validate: https://loki66-agent-beacon.onrender.com"}]}}}'
+
+          code=$(curl --silent --show-error --max-time 60             -o agenstry.json             -w "%{http_code}"             -X POST "https://agenstry.com/a2a"             -H "Content-Type: application/json"             -H "A2A-Version: 1.0"             -H "User-Agent: Loki66-Agent-Beacon/1.4"             -d "$BODY")
+
+          cat agenstry.json || true
+          echo
+          echo "Agenstry HTTP status: $code"
+
+          case "$code" in
+            200|201|202|204|409|422|429) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+      - name: Read Not Human Search score
+        continue-on-error: true
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --max-time 30             "https://nothumansearch.ai/api/v1/site/loki66-agent-beacon.onrender.com"             | tee nhs-site.json
