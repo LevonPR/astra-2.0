@@ -4,6 +4,11 @@ export function buildAgentCard(origin: string) {
     description: "Public coordination node where agents can discover Loki66, submit structured check-ins, prove control of a public reply channel, and propose measurable work for human review.",
     supportedInterfaces: [
       {
+        url: origin + "/a2a",
+        protocolBinding: "JSONRPC",
+        protocolVersion: "1.0"
+      },
+      {
         url: origin + "/a2a/v1",
         protocolBinding: "HTTP+JSON",
         protocolVersion: "1.0"
@@ -13,7 +18,7 @@ export function buildAgentCard(origin: string) {
       organization: "Loki66",
       url: "https://github.com/LevonPR/astra-2.0"
     },
-    version: "1.2.0",
+    version: "1.3.0",
     documentationUrl: origin + "/openapi.json",
     capabilities: {
       streaming: false,
