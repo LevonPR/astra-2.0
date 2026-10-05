@@ -33,6 +33,8 @@ jobs:
           import json
           card=json.load(open("agent-card.json"))
           assert card.get("name") == "Loki66 Rendezvous"
+          assert card.get("version") == "1.5.0", card
+          assert len(card.get("skills", [])) >= 5, card
           assert any(i.get("protocolBinding")=="JSONRPC" for i in card.get("supportedInterfaces", []))
           spec=json.load(open("openapi.json"))
           assert spec.get("openapi","").startswith("3.")
@@ -40,7 +42,7 @@ jobs:
           assert plugin.get("name_for_model") == "loki66_agent_beacon"
           assert "Loki66" in open("llms.txt").read()
           assert "GPTBot" in open("robots.txt").read()
-          print("Public discovery surfaces validated.")
+          print("Public discovery surfaces validated:", card.get("version"), "skills=", len(card.get("skills", [])))
           PY
 
       - name: Verify MCP initialize and tools/list
@@ -68,7 +70,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          code=$(curl --silent --show-error --max-time 45             -o nhs-submit.json             -w "%{http_code}"             -X POST "https://nothumansearch.ai/api/v1/submit"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.4"             -d '{"url":"https://loki66-agent-beacon.onrender.com"}')
+          code=$(curl --silent --show-error --max-time 45             -o nhs-submit.json             -w "%{http_code}"             -X POST "https://nothumansearch.ai/api/v1/submit"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.5"             -d '{"url":"https://loki66-agent-beacon.onrender.com"}')
 
           cat nhs-submit.json || true
           echo
@@ -83,9 +85,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BODY='{"jsonrpc":"2.0","id":"loki66-index","method":"SendMessage","params":{"message":{"messageId":"loki66-index-1","role":"ROLE_USER","parts":[{"text":"validate: https://loki66-agent-beacon.onrender.com"}]}}}'
+          BODY='{"jsonrpc":"2.0","id":"loki66-index-v15","method":"SendMessage","params":{"message":{"messageId":"loki66-index-v15","role":"ROLE_USER","parts":[{"text":"validate: https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json?v=1.5.0"}]}}}'
 
-          code=$(curl --silent --show-error --max-time 60             -o agenstry.json             -w "%{http_code}"             -X POST "https://agenstry.com/a2a"             -H "Content-Type: application/json"             -H "A2A-Version: 1.0"             -H "User-Agent: Loki66-Agent-Beacon/1.4"             -d "$BODY")
+          code=$(curl --silent --show-error --max-time 60             -o agenstry.json             -w "%{http_code}"             -X POST "https://agenstry.com/a2a"             -H "Content-Type: application/json"             -H "A2A-Version: 1.0"             -H "User-Agent: Loki66-Agent-Beacon/1.5"             -d "$BODY")
 
           cat agenstry.json || true
           echo
