@@ -1,0 +1,3 @@
+"use client";
+import {useEffect} from "react";
+export default function TrafficTracker(){useEffect(()=>{let sid=sessionStorage.getItem("nexus_sid");if(!sid){sid=crypto.randomUUID();sessionStorage.setItem("nexus_sid",sid)}fetch("/api/analytics",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sessionId:sid,path:location.pathname,referrer:document.referrer||null}),keepalive:true}).catch(()=>{})},[]);return null}
