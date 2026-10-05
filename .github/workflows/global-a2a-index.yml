@@ -15,7 +15,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Validate Loki66 Agent Card
         shell: bash
@@ -56,25 +56,113 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Submit manifest to Global A2A Registry
+      - name: Scan Loki66 using live submission API
+        if: steps.search.outputs.present != 'true'
+        id: scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY='{"url":"https://loki66-agent-beacon.onrender.com"}'
+
+          try_host() {
+            local host="$1"
+            local out="$2"
+            local code
+            code=$(curl --silent --show-error --max-time 60 \
+              -o "$out" \
+              -w "%{http_code}" \
+              -X POST "$host/public/ingest/scan" \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: Loki66-Agent-Beacon/1.5" \
+              -d "$BODY")
+            echo "$code"
+          }
+
+          host="https://www.a2a-registry.org"
+          code=$(try_host "$host" scan.json)
+          if [ "$code" = "404" ]; then
+            host="https://api.a2a-registry.org"
+            code=$(try_host "$host" scan.json)
+          fi
+
+          cat scan.json || true
+          echo
+          echo "Scan host: $host"
+          echo "Scan HTTP status: $code"
+
+          case "$code" in
+            200|201|202)
+              echo "submit_host=$host" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              exit 1
+              ;;
+          esac
+
+          python - <<'PY'
+          import json
+          data=json.load(open("scan.json"))
+          if isinstance(data, dict) and data.get("success") is False:
+              raise SystemExit("scan API reported failure: " + repr(data))
+          print("Scan accepted.")
+          PY
+
+      - name: Submit and claim Loki66
         if: steps.search.outputs.present != 'true'
         shell: bash
         run: |
           set -euo pipefail
-          BODY='{"manifestUrl":"https://loki66-agent-beacon.onrender.com/.well-known/agent-card.json"}'
-          code=$(curl --silent --show-error --max-time 60             -o ingest.json             -w "%{http_code}"             -X POST "https://api.a2a-registry.org/public/ingest"             -H "Content-Type: application/json"             -H "User-Agent: Loki66-Agent-Beacon/1.5"             -d "$BODY")
+          BODY='{"url":"https://loki66-agent-beacon.onrender.com"}'
+          HOST="${{ steps.scan.outputs.submit_host }}"
 
-          cat ingest.json || true
+          code=$(curl --silent --show-error --max-time 60 \
+            -o submit.json \
+            -w "%{http_code}" \
+            -X POST "$HOST/public/ingest/submit-and-claim" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Loki66-Agent-Beacon/1.5" \
+            -d "$BODY")
+
+          cat submit.json || true
           echo
-          echo "Global A2A Registry HTTP status: $code"
+          echo "Submit host: $HOST"
+          echo "Submit HTTP status: $code"
+
           case "$code" in
-            200|201|202|204|409|422|429) exit 0 ;;
-            *) exit 1 ;;
+            200|201|202|204|409)
+              ;;
+            *)
+              exit 1
+              ;;
           esac
 
+          python - <<'PY'
+          import json
+          try:
+              data=json.load(open("submit.json"))
+          except Exception:
+              data={}
+          if isinstance(data, dict) and data.get("success") is False:
+              raise SystemExit("submit API reported failure: " + repr(data))
+          print("Submission accepted or already exists.")
+          PY
+
       - name: Verify discovery
-        continue-on-error: true
         shell: bash
         run: |
-          sleep 2
-          curl --fail --silent --show-error --max-time 30             "https://api.a2a-registry.org/public/agents?q=Loki66"             | tee global-a2a-after.json
+          set -euo pipefail
+          sleep 3
+          curl --fail --silent --show-error --max-time 30 \
+            "https://api.a2a-registry.org/public/agents?q=Loki66" \
+            -o global-a2a-after.json
+          cat global-a2a-after.json
+          echo
+
+          python - <<'PY'
+          import json
+          data=json.load(open("global-a2a-after.json"))
+          raw=json.dumps(data).lower()
+          if "loki66" not in raw and "loki66-agent-beacon.onrender.com" not in raw:
+              raise SystemExit("Loki66 not yet visible in registry search")
+          print("Loki66 is discoverable in Global A2A Registry.")
+          PY
