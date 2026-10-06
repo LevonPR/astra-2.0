@@ -25,6 +25,16 @@ Completion percentages below measure **release readiness against the explicitly 
 | P3 | Vibe Raid | `Test / cursor/hf-game-integration-aedc` | Small polished browser release | **80%** | Quick release later |
 | P3 | Universal Mobile Studio | `games / cursor/universal-mobile-studio-891e` | Safe private/local studio v1 | **70%** | Narrow scope before continuing |
 
+## Inactive / reserved repositories
+
+| Repository | Status | Rule |
+|---|---|---|
+| `astra` | Legacy / superseded by `astra-2.0` | Do not restart work here without an explicit repurpose decision |
+| `game` | Empty reserved repository | Current game work belongs in indexed project branches under `games` until split into dedicated repos |
+| `New-Home` | Empty / unscoped | Must receive a defined v1 target, priority and status baseline before development |
+
+Each inactive repository now has a README explaining its state.
+
 ## Important scope distinctions
 
 ### Astra 2.0
@@ -140,4 +150,5 @@ Remaining focus:
 3. Percentages are changed only when release-readiness evidence changes.
 4. Feature-complete is not the same as release-ready.
 5. New large features are not added to P2/P3 projects until current exit criteria are satisfied.
-6. Empty repositories are treated as inactive/reserved until a scoped project is assigned.
+6. Inactive/reserved repositories are not used until a scoped project is explicitly assigned.
+7. The master priority order is P0 -> P1 -> P2 -> P3; new experimental work must not displace P0/P1 completion work.
